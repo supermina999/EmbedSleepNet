@@ -26,8 +26,8 @@ class SleepDataset(Dataset):
                 continue
             path = os.path.join(data_path, file)
             loaded = np.load(path)
-            data.append(loaded['data'])
-            labels.append(loaded['labels'])
+            data.append(loaded['x'])
+            labels.append(loaded['y'])
         return data, labels
 
     def reshuffle(self):
@@ -50,7 +50,7 @@ class SleepDataset(Dataset):
         start_idx = self.shifts[subj_idx] + index * self.minibatch_size
         item_data = self.data[subj_idx][start_idx:start_idx+self.minibatch_size]
         item_labels = self.labels[subj_idx][start_idx:start_idx+self.minibatch_size]
-        return torch.tensor(item_data, dtype=torch.float), torch.tensor(item_labels, dtype=torch.long)
+        return torch.tensor(item_data, dtype=torch.float).unsqueeze(1), torch.tensor(item_labels, dtype=torch.long).unsqueeze(1)
 
 
 def load_split_sleep_dataset(data_path='preprocessed', minibatch_size=20, train_coef=0.8):

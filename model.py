@@ -1,10 +1,6 @@
 import torch.nn.functional as F
 import torch.optim
 from torch import nn
-import pytorch_lightning as pl
-from torch.utils.data import DataLoader
-
-from dataset import load_split_sleep_dataset
 
 
 class TinySleepNetCNN(nn.Module):
@@ -26,7 +22,6 @@ class TinySleepNetCNN(nn.Module):
 
     def forward(self, x):
         old_shape = x.shape
-        #x = x.reshape((x.shape[0] * x.shape[1], 1, -1))
         x = x.chunk(x.shape[0], 0)
         x = torch.cat(x, 1).squeeze(0)
         x = F.relu(self.batchnorm1(self.conv1(x)))
@@ -37,7 +32,6 @@ class TinySleepNetCNN(nn.Module):
         x = self.maxpool2(x)
         x = self.flatten(x)
         x = self.dropout2(x)
-        #x = x.reshape(old_shape[0], old_shape[1], -1)
         x = x.unsqueeze(0).chunk(old_shape[0], 1)
         x = torch.cat(x)
 
@@ -55,48 +49,3 @@ class TinySleepNet(nn.Module):
         x, _ = self.lstm(x)
         x = self.fc(x).squeeze(1)
         return x
-
-
-class LightningModule(pl.LightningModule):
-    def __init__(self):
-        super().__init__()
-        self.net = TinySleepNet()
-        self.criterion = nn.CrossEntropyLoss()
-        self.learning_rate = 1e-3
-
-    def forward(self, x):
-        return self.net(x)
-
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-
-    def training_step(self, train_batch, batch_idx):
-        data, labels = train_batch
-        outputs = self(data)
-        outputs = outputs.reshape(-1, outputs.shape[2])
-        labels = labels.reshape(-1)
-        loss = self.criterion(outputs, labels)
-        self.log('train_loss', loss)
-        return {'loss': loss}
-
-    def validation_step(self, val_batch, batch_idx):
-        data, labels = val_batch
-        outputs = self(data)
-        outputs = outputs.reshape(-1, outputs.shape[len(outputs.shape) - 1])
-        labels = labels.reshape(-1)
-        loss = self.criterion(outputs, labels)
-        self.log('val_loss', loss.item(), prog_bar=True)
-        return {'val_loss': loss.item()}
-
-    def prepare_data(self):
-        self.train_ds, self.val_ds = load_split_sleep_dataset()
-
-    def train_dataloader(self):
-        return DataLoader(self.train_ds, shuffle=True, batch_size=64)
-
-    def val_dataloader(self):
-        return DataLoader(self.val_ds, batch_size=64)
-
-    def on_train_epoch_start(self):
-        self.train_ds.reshuffle()
-        self.val_ds.reshuffle()
