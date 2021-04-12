@@ -26,7 +26,9 @@ class TinySleepNetCNN(nn.Module):
 
     def forward(self, x):
         old_shape = x.shape
-        x = x.reshape((x.shape[0] * x.shape[1], 1, -1))
+        #x = x.reshape((x.shape[0] * x.shape[1], 1, -1))
+        x = x.chunk(x.shape[0], 0)
+        x = torch.cat(x, 1).squeeze(0)
         x = F.relu(self.batchnorm1(self.conv1(x)))
         x = self.dropout1(self.maxpool1(x))
         x = F.relu(self.batchnorm2(self.conv2(x)))
@@ -35,7 +37,9 @@ class TinySleepNetCNN(nn.Module):
         x = self.maxpool2(x)
         x = self.flatten(x)
         x = self.dropout2(x)
-        x = x.reshape(old_shape[0], old_shape[1], -1)
+        #x = x.reshape(old_shape[0], old_shape[1], -1)
+        x = x.unsqueeze(0).chunk(old_shape[0], 1)
+        x = torch.cat(x)
 
         return x
 
@@ -88,7 +92,7 @@ class LightningModule(pl.LightningModule):
         self.train_ds, self.val_ds = load_split_sleep_dataset()
 
     def train_dataloader(self):
-        return DataLoader(self.train_ds, shuffle=True, batch_size=3)
+        return DataLoader(self.train_ds, shuffle=True, batch_size=64)
 
     def val_dataloader(self):
         return DataLoader(self.val_ds, batch_size=64)
