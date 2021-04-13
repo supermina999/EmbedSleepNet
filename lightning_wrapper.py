@@ -1,3 +1,4 @@
+import numpy as np
 import torch.nn.functional as F
 import torch.optim
 from torch import nn
@@ -13,6 +14,7 @@ class LightningWrapper(pl.LightningModule):
         self.net = net
         self.criterion = nn.CrossEntropyLoss(weight=torch.tensor([1., 1.5, 1., 1., 1.]))
         self.learning_rate = learning_rate
+        self.max_acc = 0.0
 
     def forward(self, x):
         return self.net(x)
@@ -46,7 +48,8 @@ class LightningWrapper(pl.LightningModule):
         pred = F.softmax(outputs, dim=1)
         pred = torch.argmax(pred, dim=1)
         acc = (pred == labels).sum() / len(pred)
-        self.log('val_acc', acc, prog_bar=True)
+        self.val_accs.append(acc.item())
+        self.log('val_acc', acc.item(), prog_bar=True)
         return {'val_loss': loss.item()}
 
     def prepare_data(self):
@@ -60,3 +63,10 @@ class LightningWrapper(pl.LightningModule):
 
     def on_train_epoch_start(self):
         self.train_ds.reshuffle()
+
+    def on_validation_start(self):
+        self.val_accs = []
+
+    def on_validation_end(self):
+        acc = np.mean(np.asarray(self.val_accs)).item()
+        self.max_acc = max(self.max_acc, acc)

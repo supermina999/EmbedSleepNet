@@ -4,13 +4,13 @@ from torch import nn
 
 
 class TinySleepNetCNN(nn.Module):
-    def __init__(self):
+    def __init__(self, conv1_ch=128, conv1_kern=50):
         super().__init__()
-        self.conv1 = nn.Conv1d(1, 128, 50, 6)
-        self.batchnorm1 = nn.BatchNorm1d(128)
+        self.conv1 = nn.Conv1d(1, conv1_ch, conv1_kern, 6)
+        self.batchnorm1 = nn.BatchNorm1d(conv1_ch)
         self.maxpool1 = nn.MaxPool1d(8, 8)
         self.dropout1 = nn.Dropout()
-        self.conv2 = nn.Conv1d(128, 8, 1)
+        self.conv2 = nn.Conv1d(conv1_ch, 8, 1)
         self.batchnorm2 = nn.BatchNorm1d(8)
         self.conv3 = nn.Conv1d(8, 8, 1)
         self.batchnorm3 = nn.BatchNorm1d(8)
@@ -38,9 +38,9 @@ class TinySleepNetCNN(nn.Module):
         return x
 
 class TinySleepNet(nn.Module):
-    def __init__(self):
+    def __init__(self, conv1_ch=128, conv1_kern=50):
         super().__init__()
-        self.cnn = TinySleepNetCNN()
+        self.cnn = TinySleepNetCNN(conv1_ch=conv1_ch, conv1_kern=conv1_kern)
         self.lstm = nn.LSTM(input_size=120, hidden_size=128, batch_first=True)
         self.fc = nn.Linear(128, 5)
 
