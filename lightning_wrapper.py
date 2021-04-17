@@ -59,7 +59,7 @@ class LightningWrapper(pl.LightningModule):
         return DataLoader(self.train_ds, shuffle=True, batch_size=64)
 
     def val_dataloader(self):
-        return DataLoader(self.val_ds, batch_size=64)
+        return DataLoader(self.val_ds, batch_size=1)
 
     def on_train_epoch_start(self):
         self.train_ds.reshuffle()
