@@ -133,7 +133,7 @@ def preprocess(data_path, out_path='preprocessed', selected_ch='EEG Fpz-Cz'):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", type=str, required=True,
-                        help="Path to thes leep-cassette folder in Sleep-EDF dataset.")
+                        help="Path to the sleep-cassette folder in Sleep-EDF dataset.")
     parser.add_argument("--out_path", type=str, default="./preprocessed",
                         help="Directory where to save preprocessed data.")
     parser.add_argument("--selected_ch", type=str, default="EEG Fpz-Cz",

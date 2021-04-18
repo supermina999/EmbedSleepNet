@@ -1,13 +1,12 @@
 import torch.nn.functional as F
 import torch.optim
 from torch import nn
-import math
 
 
 class TinySleepNetCNN(nn.Module):
-    def __init__(self, conv1_ch=128, conv1_kern=50):
+    def __init__(self, conv1_ch=128):
         super().__init__()
-        self.conv1 = nn.Conv1d(1, conv1_ch, conv1_kern, 6)
+        self.conv1 = nn.Conv1d(1, conv1_ch, 50, 6)
         self.batchnorm1 = nn.BatchNorm1d(conv1_ch)
         self.maxpool1 = nn.MaxPool1d(8, 8)
         self.dropout1 = nn.Dropout()
@@ -39,9 +38,9 @@ class TinySleepNetCNN(nn.Module):
 
 
 class TinySleepNet(nn.Module):
-    def __init__(self, conv1_ch=128, conv1_kern=50):
+    def __init__(self, conv1_ch=128):
         super().__init__()
-        self.cnn = TinySleepNetCNN(conv1_ch=conv1_ch, conv1_kern=conv1_kern)
+        self.cnn = TinySleepNetCNN(conv1_ch=conv1_ch)
         self.lstm = nn.LSTM(input_size=120, hidden_size=128, batch_first=True)
         self.fc = nn.Linear(128, 5)
 
