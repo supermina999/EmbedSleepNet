@@ -4,6 +4,7 @@ import torch.optim
 from torch import nn
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
+from sklearn import metrics
 
 from dataset import load_split_sleep_dataset
 
@@ -15,6 +16,8 @@ class LightningWrapper(pl.LightningModule):
         self.criterion = nn.CrossEntropyLoss(weight=torch.tensor([1., 1.5, 1., 1., 1.]))
         self.learning_rate = learning_rate
         self.max_acc = 0.0
+        self.best_k = None
+        self.best_f1 = None
 
     def forward(self, x):
         return self.net(x)
@@ -47,8 +50,11 @@ class LightningWrapper(pl.LightningModule):
 
         pred = F.softmax(outputs, dim=1)
         pred = torch.argmax(pred, dim=1)
+
+        self.val_labels.append(labels.cpu().numpy())
+        self.val_pred.append(pred.cpu().numpy())
+
         acc = (pred == labels).sum() / len(pred)
-        self.val_accs.append(acc.item())
         self.log('val_acc', acc.item(), prog_bar=True)
         return {'val_loss': loss.item()}
 
@@ -65,8 +71,14 @@ class LightningWrapper(pl.LightningModule):
         self.train_ds.reshuffle()
 
     def on_validation_start(self):
-        self.val_accs = []
+        self.val_labels = []
+        self.val_pred = []
 
     def on_validation_end(self):
-        acc = np.mean(np.asarray(self.val_accs)).item()
-        self.max_acc = max(self.max_acc, acc)
+        labels = np.concatenate(self.val_labels)
+        pred = np.concatenate(self.val_pred)
+        acc = (pred == labels).sum() / len(pred)
+        if acc > self.max_acc:
+            self.max_acc = acc
+            self.best_k = metrics.cohen_kappa_score(labels, pred)
+            self.best_f1 = metrics.f1_score(labels, pred, average=None)
